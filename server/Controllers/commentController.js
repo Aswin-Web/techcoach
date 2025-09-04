@@ -87,6 +87,7 @@ const getConnection = require('../Models/database');
 const postComment = async (req, res) => {
     const { groupId, commentText, decisionId } = req.body;
     const memberId = req.user.id;
+    let conn;
 
     console.log('Request Body:', req.body);
 
@@ -137,30 +138,24 @@ const postComment = async (req, res) => {
             await conn.commit();
 
             res.status(201).json({
-                message: 'Comment added successfully!',
-                comment: {
-                    groupId,
-                    memberId,
-                    comment: commentText,
-                    decisionId,
-                },
-            });
-        });
-        res.status(201).json({
-            message: 'Comment added successfully!',
-            // comment: {
-            //     groupId,
-            //     memberId,
-            //     comment: commentText,   
-            //     decisionId,
-            // },   
+                    message: 'Comment added successfully!',
+                    comment: {
+                        groupId,
+                        memberId,
+                        comment: commentText,
+                        decisionId,
+                    }
+                });
+
         });
     } catch (error) {
         console.error('Error adding comment:', error.message);
-        return res.status(500).json({
-            message: 'Server error while adding comment',
-            error: error.message,
-        });
+         if (!res.headersSent) {
+            res.status(500).json({
+                message: 'Server error while adding comment',
+                error: error.message,
+            });
+        }
     }
     finally {
                 if (conn) {
