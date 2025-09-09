@@ -22,8 +22,6 @@ const MemberSharedDecisions = () => {
     const [editComment, setEditComment] = useState(null);
     const [isEditModalOpen, setEditModalOpen] = useState(false);
     const [editContent, setEditContent] = useState('');
-
-
     const { groupId } = useParams();
     const location = useLocation();
     const params = new URLSearchParams(location.search);
@@ -77,6 +75,7 @@ const MemberSharedDecisions = () => {
     const fetchSharedDecisions = async () => {
         try {
             const data = await getMemberSharedDecisions(groupId);
+            console.log('API DECISIONS DATA:', data);
             setDecisions(data || []);
             data.forEach((decision) => fetchComments(groupId, decision.decision_id));
         } catch (error) {
@@ -116,37 +115,39 @@ const MemberSharedDecisions = () => {
     // };
 
 
-    const handlePostComment = async (decisionId) => {
-        const comment = newComments[decisionId]?.trim();
-        if (!comment) {
-            return toast.error('Comment cannot be empty');
-        }
-        setButtonLoading((prevState) => ({ ...prevState, [decisionId]: true }));
-    
-        try {
-            const dataToSend = {
-                groupId,
-                comment,
-                decisionId,
-            };
-            
-            console.log('group', groupId);
-            console.log('Posting data:', dataToSend);
-    
-            // Pass the entire dataToSend object to the postComment function
-            await postComment(dataToSend);  // Pass an object here
-    
-            setNewComments((prevState) => ({ ...prevState, [decisionId]: '' }));
-            toast.success('Comment posted successfully');
-            fetchComments(groupId, decisionId);
-        } catch (error) {
-            toast.error('Error posting comment');
-            console.error('Error posting comment:', error);
-        } 
-        finally {
-            setButtonLoading((prevState) => ({ ...prevState, [decisionId]: false }));
-        }
-    };
+const handlePostComment = async (decisionId) => {
+    const comment = newComments[decisionId]?.trim();
+
+    // The 'groupId' constant is now available from the component's scope
+    console.log('Values before API call:', {
+        groupId: groupId,
+        comment: comment,
+        decisionId: decisionId
+    });
+
+    if (!comment) {
+        return toast.error('Comment cannot be empty');
+    }
+    if (!groupId) {
+        return toast.error('Group ID is missing from the URL');
+    }
+
+    setButtonLoading((prevState) => ({ ...prevState, [decisionId]: true }));
+
+    try {
+        await postComment(groupId, comment, decisionId);
+
+        setNewComments((prevState) => ({ ...prevState, [decisionId]: '' }));
+        toast.success('Comment posted successfully');
+        fetchComments(groupId, decisionId);
+
+    } catch (error) {
+        toast.error('Error posting comment');
+        console.error('Error posting comment:', error);
+    } finally {
+        setButtonLoading((prevState) => ({ ...prevState, [decisionId]: false }));
+    }
+};
     
 
     const handleMailToPostComment = async (decisionId, email) => {

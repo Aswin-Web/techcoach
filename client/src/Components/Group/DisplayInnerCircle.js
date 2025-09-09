@@ -147,28 +147,28 @@ const DisplayInnerCircle = () => {
         width: windowWidth >= 768 ? '30%' : '100%'
     };
 
-    const handleInvite = async (email) => {
+    const handleInvite = async (email, groupId) => {
         if (!isValidGmail(email)) {
             toast.error('Please enter a valid email address');
             return;
         }
         setLoadingInvite(true);
         try {
-            const response = await innerCircleInvitation(email);
-
-            console.log("ressssss", response);
+            const response = await innerCircleInvitation({ email, groupId });
 
             if (response.message === "Mail Sent Successfully") {
                 toast('Invited successfully');
-
-            } else {
-                toast('Failed to Invite ');
+                const updatedDetails = await getInnerCircleDetails();
+                setInnerCircleDetails(updatedDetails);
             }
-
 
         } catch (error) {
             console.error('Error in Inviting:', error);
-            toast('An error occurred while posting the comment');
+            if (error.response && error.response.data && error.response.data.error) {
+                toast.error(error.response.data.error);
+            } else {
+                toast.error('An error occurred while sending the invite.');
+            }
         } finally {
             setLoadingInvite(false);
         }
@@ -275,7 +275,7 @@ const DisplayInnerCircle = () => {
                                         ))}
                                         {!existingMemberEmails.includes(searchQuery) && filteredMembers.length === 0 && (
                                             <Button
-                                                onClick={() => handleInvite(searchQuery)}
+                                                onClick={() => handleInvite(searchQuery, innerCircleDetails.group.id)}
                                                 style={inviteButtonStyle}
                                                 disabled={loadingInvite}
                                             >

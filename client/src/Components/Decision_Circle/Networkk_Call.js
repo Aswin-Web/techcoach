@@ -390,40 +390,32 @@ const deleteDecisionGroup = async (id) => {
 };
 
 
-const postComment = async ({ groupId, comment, decisionId }) => {
+const postComment = async (groupId, comment, decisionId) => {
     const token = localStorage.getItem('token');
 
-    console.log("Posting comment with data:", {
-        groupId,
-        comment,
-        decisionId,
-    });
-
     try {
-        const response = await axios.post(`${process.env.REACT_APP_API_URL}/group/comments`,
-        
+        const response = await axios.post(
+            `${process.env.REACT_APP_API_URL}/group/comment`,
             {
                 groupId,
-                comment,
+                commentText: comment, // 🔥 must use `commentText`, not `comment`
                 decisionId,
-            }, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
             }
-        });
+        );
 
-        console.log("Response for comments", response);
         return response.data;
     } catch (error) {
         if (error.response) {
             console.error("Error posting comment:", error.response.data);
             throw error.response.data;
-        } else if (error.request) {
-            console.error("No response received:", error.request);
-            throw new Error('No response received from the server');
         } else {
-            console.error("Error", error.message);
+            console.error("Error:", error.message);
             throw new Error('An error occurred while posting the comment');
         }
     }
