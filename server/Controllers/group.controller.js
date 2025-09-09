@@ -1218,11 +1218,8 @@ const innerCirclePostReply = async (req, res) => {
 
 
 const innerCircleInvitation = async (req, res) => {
-    // console.log("Request body invitation:", req.user);
-    // console.log("Request body invitation:", req.body);
-
-    const { email } = req.body;
-    const { email: senderEmail } = req.user;
+    const { email, groupId } = req.body;
+    const { id: senderId, email: senderEmail } = req.user;
 
     let conn;
 
@@ -1230,25 +1227,30 @@ const innerCircleInvitation = async (req, res) => {
         conn = await getConnection();
         await conn.beginTransaction();
 
-        const groupMemberQuery = 'SELECT * FROM techcoach_lite.techcoach_users WHERE email = ?';
-        const groupMemberRows = await conn.query(groupMemberQuery, [senderEmail]);
-        const groupMemberDetails = groupMemberRows[0];
+        let userQuery = 'SELECT * FROM techcoach_lite.techcoach_users WHERE email = ?';
+        let [existingUser] = await conn.query(userQuery, [email]);
+
+        if (!existingUser) {
+            return res.status(404).json({ error: 'User is not in the application. Please ask them to sign up first.' });
+        }
+
+        const invitedUserId = existingUser.user_id;
+        const addMemberQuery = `
+            INSERT INTO techcoach_lite.techcoach_group_members (group_id, member_id, status)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE status=status`;
+        await conn.query(addMemberQuery, [groupId, invitedUserId, '']);
+
+        const senderDetailsQuery = 'SELECT * FROM techcoach_lite.techcoach_users WHERE user_id = ?';
+        const [senderDetails] = await conn.query(senderDetailsQuery, [senderId]);
 
         const emailPayload = {
-            from: {
-                address: "Decision-Coach@www.careersheets.in"
-            },
-            to: [
-                {
-                    email_address: {
-                        address: email
-                    }
-                }
-            ],
-            subject: `Join ${groupMemberDetails.displayname}'s Inner Circle`,
+            from: { address: "Decision-Coach@www.careersheets.in" },
+            to: [{ email_address: { address: email } }],
+            subject: `Join ${senderDetails.displayname}'s Inner Circle`,
             htmlbody: `<div style="font-family: Arial, sans-serif; color: #333;">
                 <p>Hi ,</p>
-                <p>${groupMemberDetails.displayname} wants to add you as a member of their inner circle in the Decision Coach app.</p>
+                <p>${senderDetails.displayname} wants to add you as a member of their inner circle in the Decision Coach app.</p>
                 <p>Please join the Decision Coach application and provide your inputs on decisions.</p>
                 <p style="text-align: center;">
                     <a href="https://decision-coach-app.onrender.com/" style="display: inline-block; padding: 10px 20px; margin: 10px 0; font-size: 16px; color: #fff; background-color: #007BFF; text-decoration: none; border-radius: 5px;">Click here to access the application</a>

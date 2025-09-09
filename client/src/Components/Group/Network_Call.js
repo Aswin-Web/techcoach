@@ -351,18 +351,18 @@ const innerCirclePostReplyComment = async (commentId, reply, groupId, decisionId
 }
 
 
-const innerCircleInvitation = async (email) =>{
+const innerCircleInvitation = async (invitationData) => {
     const token = localStorage.getItem('token');
     try {
         const response = await axios.post(`${process.env.REACT_APP_API_URL}/group/innerCircleInvitation`,
-        {email},
-        {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+            invitationData,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
         console.log("response for Inner Circle Invitation", response);
-        return response.data; 
+        return response.data;
     } catch (error) {
         console.error("Error Inviting the person to the Decision App", error);
         throw error;
