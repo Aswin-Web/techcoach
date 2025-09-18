@@ -59,7 +59,7 @@ async function sendOtpEmail(email, otp) {
         htmlbody: `
             <p>Hello,</p>
             <p>Thank you for registering. Your One-Time Password (OTP) is:</p>
-            <h2 style="text-align:center; color:#333;">${otp}</h2>
+            <h1 style="color:#333;">${otp}</h1>
             <p>This code will expire in 10 minutes.</p>
         `
     };
